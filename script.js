@@ -90,3 +90,41 @@ $("#form").addEventListener("submit", (e) => {
     open(waUrl(text), "_blank", "noopener");
   }
 });
+
+/* ===== Ekstra etkileşimler ===== */
+const prog = $("#progress"), glow = $("#glow"), hover = matchMedia("(hover: hover)").matches;
+addEventListener("scroll", () => { prog.style.transform = `scaleX(${scrollY / (document.documentElement.scrollHeight - innerHeight || 1)})`; }, { passive: true });
+if (hover && !reduce) {
+  addEventListener("pointermove", (e) => { glow.style.opacity = 1; glow.style.transform = `translate(${e.clientX}px,${e.clientY}px)`; });
+  $$(".btn.lime,.btn.wa,.btn.line").forEach((b) => {
+    b.addEventListener("pointermove", (e) => { const r = b.getBoundingClientRect(); b.style.transform = `translate(${(e.clientX - r.left - r.width / 2) * 0.2}px,${(e.clientY - r.top - r.height / 2) * 0.3}px)`; });
+    b.addEventListener("pointerleave", () => (b.style.transform = ""));
+  });
+}
+
+/* Hero başlığında dönen kelime */
+const wd = $("#word");
+if (wd && !reduce) {
+  const ws = ["büyüten", "öne çıkaran", "satış getiren", "güven veren"]; let i = 0;
+  setInterval(() => { wd.classList.add("out"); setTimeout(() => { i = (i + 1) % ws.length; wd.textContent = ws[i]; wd.classList.remove("out"); }, 350); }, 2800);
+}
+
+/* Hero: fareyle etkileşen parçacık ağı */
+const cv = $("#net");
+if (cv && !reduce) {
+  const x = cv.getContext("2d"); let w, h, P = [], m = { x: -999, y: -999 };
+  const fit = () => { w = cv.width = cv.offsetWidth; h = cv.height = cv.offsetHeight; P = Array.from({ length: Math.min(70, (w / 18) | 0) }, () => ({ x: Math.random() * w, y: Math.random() * h, vx: (Math.random() - 0.5) * 0.35, vy: (Math.random() - 0.5) * 0.35 })); };
+  fit(); addEventListener("resize", fit);
+  cv.parentElement.addEventListener("pointermove", (e) => { const r = cv.getBoundingClientRect(); m.x = e.clientX - r.left; m.y = e.clientY - r.top; });
+  let on = true; new IntersectionObserver((es) => (on = es[0].isIntersecting)).observe(cv);
+  const line = (a, b, al) => { x.strokeStyle = `rgba(217,180,108,${al})`; x.beginPath(); x.moveTo(a.x, a.y); x.lineTo(b.x, b.y); x.stroke(); };
+  (function loop() {
+    if (on) {
+      x.clearRect(0, 0, w, h);
+      for (const p of P) { p.x += p.vx; p.y += p.vy; if (p.x < 0 || p.x > w) p.vx *= -1; if (p.y < 0 || p.y > h) p.vy *= -1; x.fillStyle = "rgba(217,180,108,.7)"; x.fillRect(p.x, p.y, 2, 2); }
+      for (let i = 0; i < P.length; i++) for (let k = i + 1; k < P.length; k++) { const d = Math.hypot(P[i].x - P[k].x, P[i].y - P[k].y); if (d < 110) line(P[i], P[k], 0.18 * (1 - d / 110)); }
+      for (const p of P) { const d = Math.hypot(p.x - m.x, p.y - m.y); if (d < 150) line(p, m, 0.5 * (1 - d / 150)); }
+    }
+    requestAnimationFrame(loop);
+  })();
+}
